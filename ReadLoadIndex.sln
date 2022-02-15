@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadLoadIndex", "ReadLoadIndex\ReadLoadIndex.csproj", "{8DFC7619-9601-4E56-AE42-7E014AE079C1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8DFC7619-9601-4E56-AE42-7E014AE079C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DFC7619-9601-4E56-AE42-7E014AE079C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DFC7619-9601-4E56-AE42-7E014AE079C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DFC7619-9601-4E56-AE42-7E014AE079C1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CFFB891C-A8F8-418B-95F6-50F89C628D3B}
+	EndGlobalSection
+EndGlobal
