@@ -299,5 +299,41 @@ namespace ReadLoadIndex
 
         }
     }
-
+    public class UnitStoryData
+    {
+        public int unitid;
+        public List<int> stateStories = new List<int>();
+        public int GetStoryLove(List<int> readStories)
+        {
+            switch (stateStories.Count)
+            {
+                case 7:
+                case 11:
+                    for(int i= stateStories.Count-1; i>=0; i--)
+                    {
+                        if (readStories.Contains(stateStories[i]))
+                        {
+                            return i + 2;
+                        }
+                    }
+                    return 0;
+                case 3:
+                    if (readStories.Contains(stateStories[2]))
+                    {
+                        return 8;
+                    }
+                    if (readStories.Contains(stateStories[1]))
+                    {
+                        return 5;
+                    }
+                    if (readStories.Contains(stateStories[0]))
+                    {
+                        return 4;
+                    }
+                    return 0;
+                default:
+                    return -1;
+            }
+        }
+    }
 }

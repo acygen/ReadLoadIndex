@@ -20,9 +20,13 @@ namespace ReadLoadIndex
         Dictionary<long, PlayerData> playerDatas = new Dictionary<long, PlayerData>();
         static SQLiteConnection cn;
         List<(int, string)> showUnitDataFromdb = new List<(int, string)>();
+        Dictionary<int, UnitStoryData> unitStoyDic = new Dictionary<int, UnitStoryData>();
+        bool useStoryLove;
         public Form1()
         {
             InitializeComponent();
+            checkBox1.Checked = useStoryLove;
+            checkBox1.Text = "使用已读剧情代替好感度\n(请在导入数据前设置)";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -113,7 +117,12 @@ namespace ReadLoadIndex
                 string line = $"{unit.unit_level} {unit.unit_rarity} {love} {unit.promotion_level} {equip} {skill[0]}/{skill[1]}/{skill[2]}/{skill[3]} {unit.GetUek()}";
                 data.Add(unit.unit_level.ToString());
                 data.Add(unit.unit_rarity.ToString());
-                data.Add(love.ToString());
+                if (useStoryLove && unitStoyDic.TryGetValue(unit.id,out var storydata))
+                {
+                    data.Add(storydata.GetStoryLove(json.read_story_ids).ToString());
+                }
+                else
+                    data.Add(love.ToString());
                 data.Add(unit.promotion_level.ToString());
                 data.Add(equip);
                 data.Add($"{ skill[0]}/{ skill[1]}/{ skill[2]}/{ skill[3]}");
@@ -211,6 +220,7 @@ namespace ReadLoadIndex
             try
             {
                 showUnitDataFromdb.Clear();
+                unitStoyDic.Clear();
                 string path = Application.StartupPath + "/redive_cn.db";
                 if (File.Exists(path))
                 {
@@ -219,20 +229,8 @@ namespace ReadLoadIndex
                     {
                         cn.Open();
                     }
-                    string queryString = "SELECT * FROM " + "unit_data";
-                    var dbCommand = cn.CreateCommand();
-                    dbCommand.CommandText = queryString;
-                    SQLiteDataReader reader = dbCommand.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        int id = reader.GetInt32(reader.GetOrdinal("unit_id"));
-                        string name = reader.GetString(reader.GetOrdinal("unit_name"));
-                        if (id <= 190000)
-                        {
-                            showUnitDataFromdb.Add((id, name));
-                        }
-                    }
+                    ReadSQLTable(1);
+                    ReadSQLTable(2);
                     cn.Close();
                 }
                 else
@@ -246,7 +244,53 @@ namespace ReadLoadIndex
                 MessageBox.Show("读取db失败！" + ex.Message + ex.StackTrace);
             }
         }
+        private void ReadSQLTable(int type)
+        {
+            string queryString = "SELECT * FROM ";
+            switch (type)
+            {
+                case 1:
+                    queryString += "unit_data";
+                    break;
+                case 2:
+                    queryString += "chara_story_status";
+                    break;
 
+            }
+            var dbCommand = cn.CreateCommand();
+            dbCommand.CommandText = queryString;
+            SQLiteDataReader reader = dbCommand.ExecuteReader();
+
+            while (reader.Read())
+            {
+                switch (type)
+                {
+                    case 1:
+                        int id = reader.GetInt32(reader.GetOrdinal("unit_id"));
+                        string name = reader.GetString(reader.GetOrdinal("unit_name"));
+                        if (id <= 190000)
+                        {
+                            showUnitDataFromdb.Add((id, name));
+                        }
+                        break;
+                    case 2:
+                        int storyID = reader.GetInt32(reader.GetOrdinal("story_id"));
+                        int unitid = ((int)(storyID / 100)) * 10 + 1;
+                        if(unitStoyDic.TryGetValue(unitid,out var data))
+                        {
+                            data.stateStories.Add(storyID);
+                        }
+                        else
+                        {
+                            UnitStoryData dd = new UnitStoryData();
+                            dd.stateStories = new List<int> { storyID };
+                            unitStoyDic.Add(unitid, dd);
+                        }
+                        break;
+
+                }
+            }
+        }
         private void button4_Click(object sender, EventArgs e)
         {
             string folderPath = "";
@@ -270,6 +314,11 @@ namespace ReadLoadIndex
                     }
                 }
             }
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            useStoryLove = checkBox1.Checked;
         }
     }
 }
