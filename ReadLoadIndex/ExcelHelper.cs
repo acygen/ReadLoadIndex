@@ -108,6 +108,7 @@ namespace ReadLoadIndex
         private static void CreateExcel(FileInfo newFile)
         {
             int debugPos = 0;
+            bool isdiff = data.playerDic_diff!= null;
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -134,12 +135,27 @@ namespace ReadLoadIndex
                     {
                         worksheet0.Cells[lineIdx, 1].Value = pair2.name;
                         i = 0;
-
+                        List<UnitDataS> unitList_diff = null;
+                        if (isdiff && data.playerDic_diff.ContainsKey(pair2.view_id))
+                        {
+                            unitList_diff = data.playerDic_diff[pair2.view_id].unitList;
+                        }
                         foreach (var pair in data.allUnitDic)
                         {
+                            int unitid = pair.Key;
+
+                            int[] compairResult = new int[7];
+                            if (unitList_diff != null)
+                            {
+                                var unit_orin = pair2.unitList.Find(a => a.id == unitid);
+                                var unit_diff = unitList_diff.Find(a => a.id == unitid);
+                                if (unit_orin!=null && unit_diff != null)
+                                {
+                                    compairResult = unit_orin.CopmairAll(unit_diff);
+                                }
+                            }
                             //worksheet0.Cells[1, 1 + i * 7, 1, 1 + (i + 1) * 7-1].Merge = true;
                             //worksheet0.Cells[1, 2 + i * 7].Value = $"{pair.Key}({pair.Value})";
-                            int unitid = pair.Key;
 
                             //for(int j = 0; j < data.playerDatas.Count; j++)
 
@@ -148,13 +164,25 @@ namespace ReadLoadIndex
 
                             string[] ppp = pair2.boxDic.TryGetValue(unitid, out var vv) ? vv : new string[7] { "0", "0", "0", "0", "0", "0", "0" };
 
-                            worksheet0.Cells[lineIdx, i * 7 + 2].Value = ppp[0];
+                            /*worksheet0.Cells[lineIdx, i * 7 + 2].Value = ppp[0];
+
                             worksheet0.Cells[lineIdx, i * 7 + 3].Value = ppp[1];
                             worksheet0.Cells[lineIdx, i * 7 + 4].Value = ppp[2];
                             worksheet0.Cells[lineIdx, i * 7 + 5].Value = ppp[3];
                             worksheet0.Cells[lineIdx, i * 7 + 6].Value = ppp[4];
                             worksheet0.Cells[lineIdx, i * 7 + 7].Value = ppp[5];
-                            worksheet0.Cells[lineIdx, i * 7 + 8].Value = ppp[6];
+                            worksheet0.Cells[lineIdx, i * 7 + 8].Value = ppp[6];*/
+                            for(int j = 0; j < 7; j++)
+                            {
+                                worksheet0.Cells[lineIdx, i * 7 + 2+j].Value = ppp[j];
+                                //worksheet0.Cells[lineIdx, i * 7 + 2 + j].Style.Fill.BackgroundColor.Rgb;
+                                if (compairResult[j] != 0)
+                                {
+                                    worksheet0.Cells[lineIdx, i * 7 + 2 + j].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                                    worksheet0.Cells[lineIdx, i * 7 + 2 + j].Style.Fill.BackgroundColor.SetColor(compairResult[j]<0? System.Drawing.Color.MediumVioletRed:System.Drawing.Color.Green);
+                                }
+
+                            }
                             i++;
                         }
 

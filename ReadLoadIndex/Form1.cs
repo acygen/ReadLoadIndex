@@ -18,6 +18,8 @@ namespace ReadLoadIndex
     {
         Dictionary<int, string> unitNameDic;
         Dictionary<long, PlayerData> playerDatas = new Dictionary<long, PlayerData>();
+        Dictionary<long, PlayerData> playerDatas_diff = new Dictionary<long, PlayerData>();
+
         static SQLiteConnection cn;
         List<(int, string)> showUnitDataFromdb = new List<(int, string)>();
         Dictionary<int, UnitStoryData> unitStoyDic = new Dictionary<int, UnitStoryData>();
@@ -45,10 +47,10 @@ namespace ReadLoadIndex
             //打开windows框
             if (DllTest.GetOpenFileName(ofn))
             {
-                ImportPlayer(ofn.file);
+                ImportPlayer(ofn.file,false);
             }
         }
-        private void ImportPlayer(string path)
+        private void ImportPlayer(string path,bool diff)
         {
             string txtRead = File.ReadAllText(path);
             LoadDataBody loadDataBody;
@@ -63,7 +65,7 @@ namespace ReadLoadIndex
             }
             //richTextBox1.Clear();
             //PrintResult(loadDataBody);
-            AddPlayer(loadDataBody);
+            AddPlayer(loadDataBody,diff);
 
         }
         private void PrintResult(LoadDataBody json)
@@ -92,20 +94,36 @@ namespace ReadLoadIndex
                 richTextBox1.AppendText(line + "\r\n");
             }
         }
-        private void AddPlayer(LoadDataBody json)
+        private void AddPlayer(LoadDataBody json,bool diff)
         {
             if (unitNameDic == null)
             {
                 loadNameDic();
                 LoadSQLUnitData();
             }
-            if (playerDatas.ContainsKey(json.user_info.viewer_id))
+            if (diff)
             {
-                if(MessageBox.Show("已经有该玩家数据，是否覆盖？","提示",buttons: MessageBoxButtons.YesNo) == DialogResult.No)
+                if (playerDatas.ContainsKey(json.user_info.viewer_id))
                 {
+                    if (playerDatas_diff.ContainsKey(json.user_info.viewer_id))
+                        playerDatas_diff.Remove(json.user_info.viewer_id);
+                }
+                else
+                {
+                    richTextBox1.AppendText($"没有找到角色{json.user_info.user_name}({json.user_info.viewer_id})的原始数据!\r\n");
                     return;
                 }
-                playerDatas.Remove(json.user_info.viewer_id);
+            }
+            else
+            {
+                if (playerDatas.ContainsKey(json.user_info.viewer_id))
+                {
+                    if (MessageBox.Show("已经有该玩家数据，是否覆盖？", "提示", buttons: MessageBoxButtons.YesNo) == DialogResult.No)
+                    {
+                        return;
+                    }
+                    playerDatas.Remove(json.user_info.viewer_id);
+                }
             }
             Dictionary<int, int> unitLoveDic = new Dictionary<int, int>();
             foreach (UserChara chara in json.user_chara_info)
@@ -141,9 +159,14 @@ namespace ReadLoadIndex
             }
             PlayerData playerData = new PlayerData();
             playerData.name = System.Text.RegularExpressions.Regex.Unescape(json.user_info.user_name);
+            playerData.view_id = json.user_info.viewer_id;
             playerData.boxDic = unitDic2;
-            playerDatas.Add(json.user_info.viewer_id,playerData);
-            richTextBox1.AppendText($"成功添加{playerData.name}的数据!\r\n");
+            playerData.unitList = json.unit_list;
+            if (diff)
+                playerDatas_diff.Add(json.user_info.viewer_id, playerData);
+            else
+                playerDatas.Add(json.user_info.viewer_id, playerData);
+            richTextBox1.AppendText($"成功添加{playerData.name}{(diff?"(差异比较)":"")}的数据!\r\n");
 
         }
         private void richTextBox1_TextChanged(object sender, EventArgs e)
@@ -163,13 +186,18 @@ namespace ReadLoadIndex
 
         private void button2_Click(object sender, EventArgs e)
         {
+            Export(false);
+
+        }
+        private void Export(bool diff)
+        {
             AllPlayerData allPlayerData = new AllPlayerData();
             Dictionary<int, string> avUnit = new Dictionary<int, string>();
             allPlayerData.playerDatas = new List<PlayerData>();
 
-            foreach(var pair in playerDatas)
+            foreach (var pair in playerDatas)
             {
-                foreach(var p2 in pair.Value.boxDic)
+                foreach (var p2 in pair.Value.boxDic)
                 {
                     if (!avUnit.ContainsKey(p2.Key))
                     {
@@ -179,13 +207,13 @@ namespace ReadLoadIndex
                 allPlayerData.playerDatas.Add(pair.Value);
             }
             allPlayerData.dbList = showUnitDataFromdb;
-            if (showUnitDataFromdb.Count> 0)
+            if (showUnitDataFromdb.Count > 0)
             {
                 avUnit.Clear();
                 showUnitDataFromdb.ForEach(a => avUnit.Add(a.Item1, a.Item2));
             }
             allPlayerData.allUnitDic = avUnit;
-
+            allPlayerData.playerDic_diff = diff ? playerDatas_diff : null;
             EXCELHelper.SaveExcel(allPlayerData);
             richTextBox1.AppendText($"成功导出EXCEL!\r\n");
 
@@ -302,11 +330,15 @@ namespace ReadLoadIndex
         }
         private void button4_Click(object sender, EventArgs e)
         {
+            ImportAll(false);
+        }
+        private void ImportAll(bool diff)
+        {
             string folderPath = "";
             folderBrowserDialog1.Description = "选择文件夹";
             folderBrowserDialog1.RootFolder = Environment.SpecialFolder.Desktop;
             folderBrowserDialog1.ShowNewFolderButton = true;
-            if(folderBrowserDialog1.ShowDialog()== DialogResult.OK)
+            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 folderPath = folderBrowserDialog1.SelectedPath;
                 string[] files = Directory.GetFiles(folderPath);
@@ -315,11 +347,11 @@ namespace ReadLoadIndex
                     MessageBox.Show("空文件夹！");
                     return;
                 }
-                foreach(string path in files)
+                foreach (string path in files)
                 {
-                    if (Path.GetExtension(path).Contains("txt"))
+                    if (Path.GetExtension(path).Contains("txt")|| Path.GetExtension(path).Contains("json"))
                     {
-                        ImportPlayer(path);
+                        ImportPlayer(path, diff);
                     }
                 }
             }
@@ -328,6 +360,16 @@ namespace ReadLoadIndex
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             useStoryLove = checkBox1.Checked;
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            ImportAll(true);
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            Export(true);
         }
     }
 }

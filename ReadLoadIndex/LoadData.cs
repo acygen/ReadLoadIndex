@@ -220,6 +220,19 @@ namespace ReadLoadIndex
             }
             return $"{Result[0]}{Result[1]}{Result[2]}{Result[3]}{Result[4]}{Result[5]}";
         }
+        public int[] GetEquipListInt()
+        {
+            var Result = new int[6] { -1,-1,-1,-1,-1,-1 };
+            for (int i = 0; i < 6; i++)
+            {
+                if (equip_slot.Count > i)
+                {
+                    int lv = equip_slot[i].GetLv();
+                    Result[i] = lv;
+                }
+            }
+            return Result;
+        }
         public int[] GetSkillLevelInfo()
         {
             int[] result = new int[4] { 0, 0, 0, 0 };
@@ -238,6 +251,65 @@ namespace ReadLoadIndex
             if (unique_equip_slot != null && unique_equip_slot.Count > 0)
                 return unique_equip_slot[0].GetLv();
             return 0;
+        }
+        /// <summary>
+        /// 比较对象
+        /// </summary>
+        /// <param name="diff"></param>
+        /// <returns>0-没改过，>0-绿色改动，<0-红色改动</returns>
+        public int[] CopmairAll(UnitDataS diff)
+        {
+            int[] result = new int[7];
+            result[0] = diff.unit_level - unit_level;
+            result[1] = diff.unit_rarity == unit_rarity ? 0 : 1;
+            result[2] = 0;
+            result[3] = diff.promotion_level - promotion_level;
+
+            result[4] = CopmairEquip(diff);
+            result[5] = CompairSkill(diff);
+            result[6] = diff.GetUek() - GetUek();
+            return result;
+        }
+        private int CopmairEquip(UnitDataS diff)
+        {
+            if(diff.promotion_level > promotion_level)
+            {
+                return 1;
+            }
+            else if(diff.promotion_level == promotion_level)
+            {
+                int[] old1 = GetEquipListInt();
+                int[] new1 = diff.GetEquipListInt();
+                bool changed = false;
+                bool isok = true;
+                for(int i = 0; i < old1.Length; i++)
+                {
+                    if (new1[i] > old1[i])
+                        changed = true;
+                    if (new1[i] < old1[i])
+                        isok = false;
+
+                }
+                return isok ? (changed ? 1 : 0) : -1;
+            }
+            return -1;
+        }
+        private int CompairSkill(UnitDataS diff)
+        {
+            int[] old1 = GetSkillLevelInfo();
+            int[] new1 = diff.GetSkillLevelInfo();
+            bool changed = false;
+            bool isok = true;
+            for (int i = 0; i < old1.Length; i++)
+            {
+                if (new1[i] > old1[i])
+                    changed = true;
+                if (new1[i] < old1[i])
+                    isok = false;
+
+            }
+            return isok ? (changed ? 1 : 0) : -1;
+
         }
     }
     public class Unlock6Item
