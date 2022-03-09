@@ -191,6 +191,7 @@ namespace ReadLoadIndex
         }
         private void Export(bool diff)
         {
+
             AllPlayerData allPlayerData = new AllPlayerData();
             Dictionary<int, string> avUnit = new Dictionary<int, string>();
             allPlayerData.playerDatas = new List<PlayerData>();
@@ -213,7 +214,27 @@ namespace ReadLoadIndex
                 showUnitDataFromdb.ForEach(a => avUnit.Add(a.Item1, a.Item2));
             }
             allPlayerData.allUnitDic = avUnit;
-            allPlayerData.playerDic_diff = diff ? playerDatas_diff : null;
+            if (diff)
+            {
+                foreach (var player in allPlayerData.playerDatas)
+                {
+                    if (playerDatas_diff.ContainsKey(player.view_id))
+                    {
+                        PlayerData diff00 = playerDatas_diff[player.view_id];
+                        foreach (var pp in diff00.unitList)
+                        {
+                            var unit_orin = player.unitList.Find(a => a.id == pp.id);
+                            if (unit_orin != null)
+                            {
+                                player.compairResult.Add(pp.id, unit_orin.CopmairAll(pp));
+                            }
+                        }
+                        player.boxDic = diff00.boxDic;
+                    }
+                }
+            }
+
+            //allPlayerData.playerDic_diff = diff ? playerDatas_diff : null;
             EXCELHelper.SaveExcel(allPlayerData);
             richTextBox1.AppendText($"成功导出EXCEL!\r\n");
 

@@ -108,7 +108,7 @@ namespace ReadLoadIndex
         private static void CreateExcel(FileInfo newFile)
         {
             int debugPos = 0;
-            bool isdiff = data.playerDic_diff!= null;
+            //bool isdiff = data.playerDic_diff!= null;
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -135,17 +135,17 @@ namespace ReadLoadIndex
                     {
                         worksheet0.Cells[lineIdx, 1].Value = pair2.name;
                         i = 0;
-                        List<UnitDataS> unitList_diff = null;
+                        /*List<UnitDataS> unitList_diff = null;
                         if (isdiff && data.playerDic_diff.ContainsKey(pair2.view_id))
                         {
                             unitList_diff = data.playerDic_diff[pair2.view_id].unitList;
-                        }
+                        }*/
                         foreach (var pair in data.allUnitDic)
                         {
                             int unitid = pair.Key;
 
-                            int[] compairResult = new int[7];
-                            if (unitList_diff != null)
+                            int[] compairResult = pair2.compairResult.TryGetValue(unitid, out var v1) ? v1 : new int[7];
+                            /*if (unitList_diff != null)
                             {
                                 var unit_orin = pair2.unitList.Find(a => a.id == unitid);
                                 var unit_diff = unitList_diff.Find(a => a.id == unitid);
@@ -153,7 +153,7 @@ namespace ReadLoadIndex
                                 {
                                     compairResult = unit_orin.CopmairAll(unit_diff);
                                 }
-                            }
+                            }*/
                             //worksheet0.Cells[1, 1 + i * 7, 1, 1 + (i + 1) * 7-1].Merge = true;
                             //worksheet0.Cells[1, 2 + i * 7].Value = $"{pair.Key}({pair.Value})";
 
@@ -179,7 +179,7 @@ namespace ReadLoadIndex
                                 if (compairResult[j] != 0)
                                 {
                                     worksheet0.Cells[lineIdx, i * 7 + 2 + j].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                                    worksheet0.Cells[lineIdx, i * 7 + 2 + j].Style.Fill.BackgroundColor.SetColor(compairResult[j]<0? System.Drawing.Color.MediumVioletRed:System.Drawing.Color.Green);
+                                    worksheet0.Cells[lineIdx, i * 7 + 2 + j].Style.Fill.BackgroundColor.SetColor(compairResult[j]<0? System.Drawing.Color.Red:System.Drawing.Color.Green);
                                 }
 
                             }
