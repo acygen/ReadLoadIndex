@@ -33,14 +33,14 @@ namespace ReadLoadIndex
         {
             OpenFileName ofn = new OpenFileName();
             ofn.structSize = System.Runtime.InteropServices.Marshal.SizeOf(ofn);
-            ofn.filter = "txt(*.txt)\0";  //指定打开格式
+            ofn.filter = "txt(*.txt;*.json)\0*.txt;*json\0\0";  //指定打开格式"Excel Files(*.xlsx)\0*.xlsx\0"
             ofn.file = new string(new char[256]);
             ofn.maxFile = ofn.file.Length;
             ofn.fileTitle = new string(new char[64]);
             ofn.maxFileTitle = ofn.fileTitle.Length;
             ofn.initialDir = Application.StartupPath;//默认路径
-            ofn.title = "打开LoadIndex.txt";
-            ofn.defExt = "txt";
+            ofn.title = "打开LoadIndex";
+            //ofn.defExt = "txt";
             ofn.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000200 | 0x00000008;//OFN_EXPLORER|OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST| OFN_ALLOWMULTISELECT|OFN_NOCHANGEDIR
             //打开windows框
             if (DllTest.GetOpenFileName(ofn))
@@ -51,7 +51,16 @@ namespace ReadLoadIndex
         private void ImportPlayer(string path)
         {
             string txtRead = File.ReadAllText(path);
-            LoadDataBody loadDataBody = JsonConvert.DeserializeObject<LoadDataBody>(txtRead);
+            LoadDataBody loadDataBody;
+            if (txtRead.Contains("data_headers"))
+            {
+                LoadData loadData = JsonConvert.DeserializeObject<LoadData>(txtRead);
+                loadDataBody = loadData.data;
+            }
+            else
+            {
+                loadDataBody = JsonConvert.DeserializeObject<LoadDataBody>(txtRead);
+            }
             //richTextBox1.Clear();
             //PrintResult(loadDataBody);
             AddPlayer(loadDataBody);

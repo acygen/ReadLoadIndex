@@ -6,6 +6,26 @@ using System.Threading.Tasks;
 
 namespace ReadLoadIndex
 {
+    public class LoadData
+    {
+        public DataHead data_headers;
+        public LoadDataBody data;
+    }
+    public class DataHead
+    {
+        public string request_id = "1234564894";
+        public int short_udid = 0;
+        public long viewer_id = 0;
+        public string sid = "000";
+        public long servertime = 1615604550;
+        public int result_code;
+        public DataHead() { }
+        public DataHead(int resultcode, long time = 0)
+        {
+            servertime = time;
+            result_code = resultcode;
+        }
+    }
     public class LoadDataBody
     {
         public UserInfo user_info;
