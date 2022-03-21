@@ -392,5 +392,46 @@ namespace ReadLoadIndex
         {
             Export(true);
         }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            string folderPath = "";
+            folderBrowserDialog1.Description = "选择文件夹";
+            folderBrowserDialog1.RootFolder = Environment.SpecialFolder.Desktop;
+            folderBrowserDialog1.ShowNewFolderButton = true;
+            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            {
+                folderPath = folderBrowserDialog1.SelectedPath;
+                string[] files = Directory.GetFiles(folderPath);
+                if (files == null || files.Length <= 0)
+                {
+                    MessageBox.Show("空文件夹！");
+                    return;
+                }
+                foreach (string path in files)
+                {
+                    if (Path.GetExtension(path).Contains("txt") || Path.GetExtension(path).Contains("json"))
+                    {
+                        string txtRead = File.ReadAllText(path);
+                        LoadDataBody loadDataBody;
+                        if (txtRead.Contains("data_headers"))
+                        {
+                            LoadData loadData = JsonConvert.DeserializeObject<LoadData>(txtRead);
+                            loadDataBody = loadData.data;
+                            File.WriteAllText(path, JsonConvert.SerializeObject(loadDataBody));
+                            richTextBox1.AppendText($"成功转换{Path.GetFileName(path)}的格式！\r\n");
+                        }
+                        else
+                        {
+                            richTextBox1.AppendText($"文件{Path.GetFileName(path)}的格式无需转换！\r\n");
+                        }
+                        //richTextBox1.Clear();
+                        //PrintResult(loadDataBody);
+
+                    }
+                }
+            }
+
+        }
     }
 }
